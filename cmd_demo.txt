@@ -1,0 +1,27 @@
+0. Train YOLO without cell type
+(Run in yolov8 env)
+python "6_self_training.py" --labeled_img_path "G:/Zebrafish Blood Analysis/YOLOV8/All Labeled Data/images" --labels_path "G:/Zebrafish Blood Analysis/YOLOV8/All Labeled Data/labels" --num_cell_type 1 --all_img_path "G:/Zebrafish Blood Analysis/YOLOV8/All Labeled Data/images" --master_path "G:/Zebrafish Blood Analysis/YOLOV8/20250216 - Demo/Full Cycle Trial/YOLO_no_cell_type" --train_round 1 --train_test_split 0.7 --conf 0.5 --extra_sample_per_rd 400 --epoch 500 --batch_size 16 --image_dim 512
+
+1. Predict, crop and process
+(Run in yolov8 env)
+python "1_predict_crop_and_process.py" --frame_skip 1 --conf 0.5 --crop_square --resize_to 128 --trained_yolo_path "G:/Zebrafish Blood Analysis/YOLOV8/20250216 - Demo/Full Cycle Trial/YOLO_no_cell_type/Round 0/runs/detect/train2/weights/best.pt" --image_input_path "G:/Zebrafish Blood Analysis/YOLOV8/20250216 - Demo/Full Cycle Trial/Predict_crop_process/Frame" --image_output_path "G:/Zebrafish Blood Analysis/YOLOV8/20250216 - Demo/Full Cycle Trial/Predict_crop_process/Cell"
+
+2. Data preparation
+(Run in tf_210 env)
+python "2_data_prep.py" --image_input_path "G:/Zebrafish Blood Analysis/YOLOV8/20250216 - Demo/Full Cycle Trial/Predict_crop_process/Cell" --seg_model "G:/Zebrafish Blood Analysis/YOLOV8/20250216 - Demo/Model/U-Net/1737636964/epoch_60_loss_0.0881" --save_prop_to "G:/Zebrafish Blood Analysis/YOLOV8/20250216 - Demo/Full Cycle Trial/Data_prep/cell_prop.csv" --save_mask_to "G:/Zebrafish Blood Analysis/YOLOV8/20250216 - Demo/Full Cycle Trial/Data_prep/Mask" --save_masked_cell_to "G:/Zebrafish Blood Analysis/YOLOV8/20250216 - Demo/Full Cycle Trial/Data_prep/Masked_cell"
+
+3. Run PCA
+(Run in tf_210 env)
+python "3_run_pca.py" --prop_csv_path "G:/Zebrafish Blood Analysis/YOLOV8/20250216 - Demo/Full Cycle Trial/Data_prep/cell_prop.csv" --save_pca_model_to "G:/Zebrafish Blood Analysis/YOLOV8/20250216 - Demo/Full Cycle Trial/Run_pca/DEMO_PCA.pkl" --save_pca_plot_to "G:/Zebrafish Blood Analysis/YOLOV8/20250216 - Demo/Full Cycle Trial/Run_pca/pca_plot.png"
+
+4. Run K-means clustering
+(Run in tf_210 env)
+python "4_run_km_clustering.py" --prop_csv_path "G:/Zebrafish Blood Analysis/YOLOV8/20250216 - Demo/Full Cycle Trial/Data_prep/cell_prop.csv" --trained_pca_path "G:/Zebrafish Blood Analysis/YOLOV8/20250216 - Demo/Full Cycle Trial/Run_pca/DEMO_PCA.pkl" --save_km_model_to "G:/Zebrafish Blood Analysis/YOLOV8/20250216 - Demo/Full Cycle Trial/Run_km_cluster/DEMO_KMC.pkl" --save_cluster_plot_to "G:/Zebrafish Blood Analysis/YOLOV8/20250216 - Demo/Full Cycle Trial/Run_km_cluster/kmc_plot.png"
+
+5. Add label from unsupervised learning method
+(Run in tf_210 env)
+python "5_add_label_from_unsupervised.py" --labeled_img_path "G:/Zebrafish Blood Analysis/YOLOV8/All Labeled Data/images" --labels_path "G:/Zebrafish Blood Analysis/YOLOV8/All Labeled Data/labels" --seg_model "G:/Zebrafish Blood Analysis/YOLOV8/20250216 - Demo/Model/U-Net/1737636964/epoch_60_loss_0.0881" --pca_model "G:/Zebrafish Blood Analysis/YOLOV8/20250216 - Demo/Full Cycle Trial/Run_pca/DEMO_PCA.pkl" --km_model "G:/Zebrafish Blood Analysis/YOLOV8/20250216 - Demo/Full Cycle Trial/Run_km_cluster/DEMO_KMC.pkl" --new_labels_save_to "G:/Zebrafish Blood Analysis/YOLOV8/20250216 - Demo/Full Cycle Trial/Add_labels_from_unsupervised/labels"
+
+6. Retrain YOLO with cell type
+(Run in yolov8 env)
+python "6_self_training.py" --labeled_img_path "G:/Zebrafish Blood Analysis/YOLOV8/All Labeled Data/images" --labels_path "G:/Zebrafish Blood Analysis/YOLOV8/20250216 - Demo/Full Cycle Trial/Add_labels_from_unsupervised/labels" --num_cell_type 2 --all_img_path "G:/Zebrafish Blood Analysis/YOLOV8/All Labeled Data/images" --master_path "G:/Zebrafish Blood Analysis/YOLOV8/20250216 - Demo/Full Cycle Trial/YOLO_with_cell_type" --train_round 1 --train_test_split 0.7 --conf 0.5 --extra_sample_per_rd 400 --epoch 500 --batch_size 16 --image_dim 512
