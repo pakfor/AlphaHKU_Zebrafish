@@ -25,3 +25,7 @@ python "5_add_label_from_unsupervised.py" --labeled_img_path "G:/Zebrafish Blood
 6. Retrain YOLO with cell type
 (Run in yolov8 env)
 python "6_self_training.py" --labeled_img_path "G:/Zebrafish Blood Analysis/YOLOV8/All Labeled Data/images" --labels_path "G:/Zebrafish Blood Analysis/YOLOV8/20250216 - Demo/Full Cycle Trial/Add_labels_from_unsupervised/labels" --num_cell_type 2 --all_img_path "G:/Zebrafish Blood Analysis/YOLOV8/All Labeled Data/images" --master_path "G:/Zebrafish Blood Analysis/YOLOV8/20250216 - Demo/Full Cycle Trial/YOLO_with_cell_type" --train_round 1 --train_test_split 0.7 --conf 0.5 --extra_sample_per_rd 400 --epoch 500 --batch_size 16 --image_dim 512
+
+7. Train segmentation model
+(Run in tf_210 env)
+python "7_train_seg_network.py" --x_train "G:/Zebrafish Blood Analysis/UNET/Single Cell Segmentation/Single Cell Segmentation/Data/image" --y_train "G:/Zebrafish Blood Analysis/UNET/Single Cell Segmentation/Single Cell Segmentation/Data/label" --preprocess "hist_match" --hist_ref "G:/Zebrafish Blood Analysis/UNET/Single Cell Segmentation/Single Cell Segmentation/Data/image/zbf_4_img_0990_png_Box_04.png" --enable_data_aug --model_save_path "G:/Zebrafish Blood Analysis/UNET/Single Cell Segmentation/Single Cell Segmentation/Model"  --train_test_split 0.7 --loss "mse_dice_mixed" --epoch 500 --batch_size 4
