@@ -29,3 +29,7 @@ python "6_self_training.py" --labeled_img_path "G:/Zebrafish Blood Analysis/YOLO
 7. Train segmentation model
 (Run in tf_210 env)
 python "7_train_seg_network.py" --x_train "G:/Zebrafish Blood Analysis/UNET/Single Cell Segmentation/Single Cell Segmentation/Data/image" --y_train "G:/Zebrafish Blood Analysis/UNET/Single Cell Segmentation/Single Cell Segmentation/Data/label" --preprocess "hist_match" --hist_ref "G:/Zebrafish Blood Analysis/UNET/Single Cell Segmentation/Single Cell Segmentation/Data/image/zbf_4_img_0990_png_Box_04.png" --enable_data_aug --model_save_path "G:/Zebrafish Blood Analysis/UNET/Single Cell Segmentation/Single Cell Segmentation/Model"  --train_test_split 0.7 --loss "mse_dice_mixed" --epoch 500 --batch_size 4
+
+8. Test segmentation model
+(Run in tf_210 env)
+python "8_run_seg_network.py" --model_path "G:/Zebrafish Blood Analysis/UNET/Single Cell Segmentation/Single Cell Segmentation/Model/1740570178/model_ckpt/epoch_19_loss_0.0893"  --image_to_pred_path "G:/Zebrafish Blood Analysis/YOLOV8/Cropped_ZBF4_Cells_For_Testing_Seg_Model" --pred_montage_save_path "G:/Zebrafish Blood Analysis/UNET/Single Cell Segmentation/Single Cell Segmentation/Predictions/Model_1740570178" --preprocess_method "hist_match" --hist_ref "G:/Zebrafish Blood Analysis/UNET/Single Cell Segmentation/Single Cell Segmentation/Data/image/zbf_4_img_0990_png_Box_04.png"
