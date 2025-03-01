@@ -3,6 +3,9 @@ import cv2
 import random
 import shutil
 import argparse
+import numpy as np
+import skimage
+import matplotlib.pyplot as plt
 from ultralytics import YOLO
 
 random.seed(1)
@@ -12,7 +15,7 @@ def create_directories_recursive(paths):
         if not os.path.exists(path):
             os.makedirs(path, exist_ok=True)
 
-def prepare_fully_labeled_data(all_labeled_img_dir, all_labels_dir, train_dir, test_dir, train_test_split):
+def prepare_fully_labeled_data(all_labeled_img_dir, all_labels_dir, train_dir, test_dir, train_test_split, preprocess_method, hist_ref_path):
     train_img_dir = f"{train_dir}/images"
     train_lb_dir = f"{train_dir}/labels"
     test_img_dir = f"{test_dir}/images"
@@ -23,20 +26,42 @@ def prepare_fully_labeled_data(all_labeled_img_dir, all_labels_dir, train_dir, t
     labeled_data_size = len(labels_list)
     train_size = int(train_test_split * labeled_data_size)
     random.shuffle(labels_list)
+
+    if hist_ref_path is not None:
+        ref_img = cv2.imread(hist_ref_path, cv2.IMREAD_GRAYSCALE)
+        ref_img = np.expand_dims(ref_img, axis=-1)
+
     for i in range(0, labeled_data_size):
         datum_name = labels_list[i].replace(".txt", "")
-        if i < train_size:
-            shutil.copy(f"{all_labeled_img_dir}/{datum_name}.png",
-                        f"{train_img_dir}/{datum_name}.png")
-            shutil.copy(f"{all_labels_dir}/{datum_name}.txt",
-                        f"{train_lb_dir}/{datum_name}.txt")
-        else:
-            shutil.copy(f"{all_labeled_img_dir}/{datum_name}.png",
-                        f"{test_img_dir}/{datum_name}.png")
-            shutil.copy(f"{all_labels_dir}/{datum_name}.txt",
-                        f"{test_lb_dir}/{datum_name}.txt")
+        if preprocess_method == "hist_match":
+            img_tmp = cv2.imread(f"{all_labeled_img_dir}/{datum_name}.png", cv2.IMREAD_GRAYSCALE)
+            img_tmp = np.expand_dims(img_tmp, axis=-1)
+            img_tmp = skimage.exposure.match_histograms(img_tmp, ref_img, channel_axis=-1)
+            img_tmp = np.squeeze(img_tmp, axis=-1)
+            img_tmp = (img_tmp - np.min(img_tmp)) / (np.max(img_tmp) - np.min(img_tmp))
 
-def prepare_pseudo_labeled_data(prev_rd_model_dir, all_img_dir, prev_data_dir, curr_data_dir, desired_conf_level, num_pseudo_labeled_data=None):
+            if i < train_size:
+                plt.imsave(f"{train_img_dir}/{datum_name}.png", img_tmp, cmap='gray')
+                shutil.copy(f"{all_labels_dir}/{datum_name}.txt",
+                            f"{train_lb_dir}/{datum_name}.txt")
+            else:
+                plt.imsave(f"{test_img_dir}/{datum_name}.png", img_tmp, cmap='gray')
+                shutil.copy(f"{all_labels_dir}/{datum_name}.txt",
+                            f"{test_lb_dir}/{datum_name}.txt")
+
+        else:
+            if i < train_size:
+                shutil.copy(f"{all_labeled_img_dir}/{datum_name}.png",
+                            f"{train_img_dir}/{datum_name}.png")
+                shutil.copy(f"{all_labels_dir}/{datum_name}.txt",
+                            f"{train_lb_dir}/{datum_name}.txt")
+            else:
+                shutil.copy(f"{all_labeled_img_dir}/{datum_name}.png",
+                            f"{test_img_dir}/{datum_name}.png")
+                shutil.copy(f"{all_labels_dir}/{datum_name}.txt",
+                            f"{test_lb_dir}/{datum_name}.txt")
+
+def prepare_pseudo_labeled_data(prev_rd_model_dir, all_img_dir, prev_data_dir, curr_data_dir, desired_conf_level, num_pseudo_labeled_data):
     # Copy existing labeled data
     shutil.copytree(prev_data_dir, curr_data_dir)
 
@@ -78,7 +103,7 @@ def prepare_pseudo_labeled_data(prev_rd_model_dir, all_img_dir, prev_data_dir, c
         with open(labels_txt_file_dir, "w+") as f:
             f.write(write_str)
 
-def main(labeled_img_path, labels_path, num_cell_type, all_img_path, master_path, train_round, train_test_split, conf, extra_sample_per_rd, epoch, batch_size, image_dim):
+def main(labeled_img_path, labels_path, num_cell_type, all_img_path, master_path, train_round, train_test_split, conf, extra_sample_per_rd, epoch, batch_size, image_dim, preprocess_method, hist_ref_path):
     for i in range(0, train_round):
         print(f"Round {i} begins")
 
@@ -88,7 +113,9 @@ def main(labeled_img_path, labels_path, num_cell_type, all_img_path, master_path
                                        labels_path,
                                        f"{master_path}/Round 0/Data/Train",
                                        f"{master_path}/Round 0/Data/Test",
-                                       train_test_split)
+                                       train_test_split,
+                                       preprocess_method,
+                                       hist_ref_path)
         else:
             prepare_pseudo_labeled_data(f"{master_path}/Round {i - 1}/runs/detect/train/weights/best.pt",
                                         all_img_path,
@@ -120,6 +147,8 @@ if __name__ == '__main__':
     parser.add_argument("--epoch", help="Epoch per round", type=int)
     parser.add_argument("--batch_size", help="Batch size", type=int)
     parser.add_argument("--image_dim", help="Image dimension", type=int)
+    parser.add_argument("--preprocess", help="Pre-processing technique", type=str)
+    parser.add_argument("--hist_ref", help="Histogram reference image (Only applicable for using preprocessing method hist_match", type=str)
     args = parser.parse_args()
 
     labeled_img_path = args.labeled_img_path  # "G:/Zebrafish Blood Analysis/YOLOV8/20250206 - Labeled Training/YOLO Data/images"
@@ -134,6 +163,8 @@ if __name__ == '__main__':
     epoch = args.epoch  # 500
     batch_size = args.batch_size  # 16
     image_dim = args.image_dim  # 500
+    preprocess_method = args.preprocess  # hist_eq/hist_match
+    hist_ref_path = args.hist_ref  # G:/Zebrafish Blood Analysis/UNET/Single Cell Segmentation/Single Cell Segmentation/Data/image/zbf_4_img_0990_png_Box_04.png
 
     print("Labeled images path", labeled_img_path)
     print("Labels path", labels_path)
@@ -147,7 +178,12 @@ if __name__ == '__main__':
     print("Epoch per round", epoch)
     print("Batch size", batch_size)
     print("Image dimension", image_dim)
+    print("Preprocessing", preprocess_method)
+    print("Histogram reference image", hist_ref_path)
 
     os.makedirs(master_path, exist_ok=True)
 
-    main(labeled_img_path, labels_path, num_cell_type, all_img_path, master_path, train_round, train_test_split, conf, extra_sample_per_rd, epoch, batch_size, image_dim)
+    if preprocess_method is None:
+        preprocess_method = " "
+
+    main(labeled_img_path, labels_path, num_cell_type, all_img_path, master_path, train_round, train_test_split, conf, extra_sample_per_rd, epoch, batch_size, image_dim, preprocess_method, hist_ref_path)

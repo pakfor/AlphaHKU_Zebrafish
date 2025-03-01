@@ -1,6 +1,10 @@
 0. Train YOLO without cell type
 (Run in yolov8 env)
-python "6_self_training.py" --labeled_img_path "G:/Zebrafish Blood Analysis/YOLOV8/All Labeled Data/images" --labels_path "G:/Zebrafish Blood Analysis/YOLOV8/All Labeled Data/labels" --num_cell_type 1 --all_img_path "G:/Zebrafish Blood Analysis/YOLOV8/All Labeled Data/images" --master_path "G:/Zebrafish Blood Analysis/YOLOV8/20250216 - Demo/Full Cycle Trial/YOLO_no_cell_type" --train_round 1 --train_test_split 0.7 --conf 0.5 --extra_sample_per_rd 400 --epoch 500 --batch_size 16 --image_dim 512
+python "6_self_training.py" --labeled_img_path "G:/Zebrafish Blood Analysis/YOLOV8/All Labeled Data/images" --labels_path "G:/Zebrafish Blood Analysis/YOLOV8/All Labeled Data/labels" --num_cell_type 1 --all_img_path "G:/Zebrafish Blood Analysis/YOLOV8/All Labeled Data/images" --master_path "G:/Zebrafish Blood Analysis/YOLOV8/20250216 - Demo/Full Cycle Trial/YOLO_no_cell_type_orig" --train_round 1 --train_test_split 0.7 --conf 0.5 --extra_sample_per_rd 400 --epoch 500 --batch_size 16 --image_dim 512
+
+0. Train YOLO without cell type (Histogram matched)
+(Run in yolov8 env)
+python "6_self_training.py" --labeled_img_path "G:/Zebrafish Blood Analysis/YOLOV8/All Labeled Data/images" --labels_path "G:/Zebrafish Blood Analysis/YOLOV8/All Labeled Data/labels" --num_cell_type 1 --all_img_path "G:/Zebrafish Blood Analysis/YOLOV8/All Labeled Data/images" --master_path "G:/Zebrafish Blood Analysis/YOLOV8/20250216 - Demo/Full Cycle Trial/YOLO_no_cell_type_hist_match_2" --train_round 1 --train_test_split 0.7 --conf 0.5 --extra_sample_per_rd 400 --epoch 500 --batch_size 16 --image_dim 512 --preprocess "hist_match" --hist_ref "G:/Zebrafish Blood Analysis/YOLOV8/All Labeled Data/images/zbf_4_img_0011.png"
 
 1. Predict, crop and process
 (Run in yolov8 env)
